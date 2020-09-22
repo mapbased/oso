@@ -58,6 +58,9 @@ class Polar:
     def next_message(self):
         return lib.polar_next_polar_message(self.ptr)
 
+    def clear_rules(self):
+        return check_result(lib.polar_clear_rules(self.ptr))
+
 
 class Query:
     def __init__(self, ptr):

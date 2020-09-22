@@ -19,6 +19,7 @@ def reset_oso():
     Useful as a test helper to clean state between tests, but generally should
     not be used otherwise.
     """
+    Oso.clear_rules()
     Oso.clear()
     init_oso()
 

@@ -352,6 +352,15 @@ pub extern "C" fn polar_get_external_id(polar_ptr: *mut Polar) -> u64 {
     })
 }
 
+#[no_mangle]
+pub extern "C" fn polar_clear_rules(polar_ptr: *mut Polar) -> i32 {
+    ffi_try!({
+        let polar = unsafe { ffi_ref!(polar_ptr) };
+        polar.clear_rules();
+        POLAR_SUCCESS
+    })
+}
+
 /// Required to free strings properly
 #[no_mangle]
 pub extern "C" fn string_free(s: *mut c_char) -> i32 {

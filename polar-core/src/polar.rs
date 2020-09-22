@@ -237,6 +237,12 @@ impl Polar {
     pub fn next_message(&self) -> Option<Message> {
         self.messages.next()
     }
+
+    pub fn clear_rules(&self) {
+        self.kb.write().unwrap().rules.clear();
+        self.loaded_content.write().unwrap().clear();
+        self.loaded_files.write().unwrap().clear();
+    }
 }
 
 #[cfg(test)]

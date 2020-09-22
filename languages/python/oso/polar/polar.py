@@ -90,6 +90,9 @@ class Polar:
         del self.ffi_polar
         self.ffi_polar = FfiPolar()
 
+    def clear_rules(self):
+        self.ffi_polar.clear_rules()
+
     def load_file(self, policy_file):
         """Load in polar policies. By default, defers loading of knowledge base
         until a query is made."""
