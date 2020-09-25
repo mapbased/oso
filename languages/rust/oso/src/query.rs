@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
+use crate::errors::OsoError;
 use crate::host::{Host, Instance, PolarResultIter};
 use crate::FromPolar;
 
@@ -86,10 +87,17 @@ impl Query {
                 ),
                 QueryEvent::Debug { message } => self.handle_debug(message),
             };
-            if let Err(e) = result {
-                // TODO (dhatch): These seem to be getting swallowed
-                tracing::error!("application error {}", e);
-                self.application_error(e);
+
+            match result {
+                // Only call errors get passed back.
+                Err(call_error @ OsoError::InvalidCallError { .. }) => {
+                    tracing::error!("application invalid call error {}", call_error);
+                    self.application_error(call_error);
+                },
+                // All others get returned.
+                Err(err) => return Some(Err(err)),
+                // Continue on ok
+                Ok(_) => {}
             }
         }
     }
@@ -106,6 +114,12 @@ impl Query {
         Ok(self.inner.call_result(call_id, None)?)
     }
 
+    /// Return an application error to Polar.
+    ///
+    /// NOTE: This should only be used for InvalidCallError.
+    /// TODO (dhatch): Refactor Polar API so this is clear.
+    ///
+    /// All other errors must be returned directly from query.
     fn application_error(&mut self, error: crate::OsoError) {
         self.inner.application_error(error.to_string())
     }
@@ -155,16 +169,16 @@ impl Query {
         }
         let instance = Instance::from_polar(&instance, &self.host).unwrap();
         if let Err(e) = self.register_call(call_id, instance, name, args) {
-            self.application_error(e);
-            return self.call_result_none(call_id);
+            self.call_result_none(call_id)?;
+            return Err(e);
         }
 
         if let Some(result) = self.next_call_result(call_id) {
             match result {
                 Ok(r) => self.call_result(call_id, r),
                 Err(e) => {
-                    self.application_error(e);
-                    self.call_result_none(call_id)
+                    self.call_result_none(call_id)?;
+                    return Err(e);
                 }
             }
         } else {
